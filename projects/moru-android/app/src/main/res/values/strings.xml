@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MORU</string>
+    <string name="default_notification_channel_id" translatable="false">default_channel</string>
+</resources>

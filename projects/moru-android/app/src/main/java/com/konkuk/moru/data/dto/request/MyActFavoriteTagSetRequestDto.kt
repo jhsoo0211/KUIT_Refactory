@@ -1,0 +1,8 @@
+package com.konkuk.moru.data.dto.request
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class MyActFavoriteTagSetRequestDto(
+    val tagIds: List<String>
+)
