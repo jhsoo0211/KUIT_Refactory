@@ -15,3 +15,5 @@
 | 09 | Hilt 기반 의존성 주입 | [`KUIT5_Android-API:jhsoo0211/week9`](https://github.com/jhsoo0211/KUIT5_Android-API/tree/jhsoo0211/week9) |
 
 프로젝트 시작용 코드는 포트폴리오 작업과 구분해 [`reference/project-scaffold`](../reference/project-scaffold)에 보관했습니다. 각 import의 정확한 commit SHA는 [SOURCE_MANIFEST.md](../docs/SOURCE_MANIFEST.md)에 기록되어 있습니다.
+
+주차별 스냅샷의 보존 원칙과 MORU로 이어지는 전체 학습 경로는 [Repository guide](../docs/REPOSITORY_GUIDE.md)를 참고하세요.

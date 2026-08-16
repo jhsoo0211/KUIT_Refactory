@@ -134,8 +134,8 @@ fun LoginScreen(
                         email = email,
                         password = password,
                         context = context,
-                        onSuccess = { isOnboarded -> // [변경] 시그니처 변경
-                            // [변경] 서버/로컬이 일치된 상태에서 곧바로 분기
+                        onSuccess = { isOnboarded ->
+                            // Use the authenticated server response so local navigation cannot drift.
                             if (isOnboarded) {
                                 navController.navigate(Route.Main.route) {
                                     popUpTo(Route.Login.route) { inclusive = true }

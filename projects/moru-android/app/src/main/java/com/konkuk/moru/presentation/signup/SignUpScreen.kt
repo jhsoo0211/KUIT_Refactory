@@ -19,7 +19,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,26 +33,20 @@ import com.konkuk.moru.presentation.signup.component.SignUpTextField
 import com.konkuk.moru.ui.theme.MORUTheme.colors
 import com.konkuk.moru.ui.theme.MORUTheme.typography
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.konkuk.moru.core.component.TopBarLogoWithTitle
 import com.konkuk.moru.core.component.button.MoruButtonTypeA
-import com.konkuk.moru.core.datastore.LoginPreference
 import com.konkuk.moru.core.validation.AuthInputValidator
 import com.konkuk.moru.presentation.navigation.Route
 import com.konkuk.moru.presentation.signup.component.CompleteSignupPopup
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun SignUpScreen(
     navController: NavController,
     viewModel: SignUpViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val focusManager = LocalFocusManager.current
 
@@ -189,10 +182,7 @@ fun SignUpScreen(
                             email = email,
                             password = password,
                             onSuccess = {
-                                Log.d("signup", "success → mark loggedIn & show popup")
-                                scope.launch {
-                                    LoginPreference.setLoggedIn(context, true)
-                                }
+                                Log.d("signup", "success → show completion popup")
                                 showPopup = true
                             },
                             onFailure = {

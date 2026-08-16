@@ -24,6 +24,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,6 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.konkuk.moru.core.component.MoruBottomBar
 import com.konkuk.moru.presentation.auth.AuthCheckScreen
+import com.konkuk.moru.presentation.auth.SessionViewModel
 import com.konkuk.moru.presentation.home.component.HomeTutorialOverlayContainer
 import com.konkuk.moru.presentation.home.screen.HomeOnboardingScreen
 import com.konkuk.moru.presentation.login.LoginScreen
@@ -43,9 +46,27 @@ import com.konkuk.moru.presentation.signup.SignUpScreen
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    routineFocusViewModel: RoutineFocusViewModel? = null
+    routineFocusViewModel: RoutineFocusViewModel? = null,
+    pendingNotificationRoute: String? = null,
+    onNotificationRouteConsumed: () -> Unit = {}
 ) {
     val startDestination = Route.AuthCheck.route
+    val sessionViewModel: SessionViewModel = hiltViewModel()
+    val isSignedIn by sessionViewModel.isSignedIn.collectAsStateWithLifecycle()
+    val appBackStackEntry by navController.currentBackStackEntryAsState()
+    val appRoute = appBackStackEntry?.destination?.route
+
+    // Main and onboarding both require a live token. A rejected refresh therefore exits any
+    // authenticated top-level flow instead of leaving a stale UI with a separate login flag.
+    LaunchedEffect(isSignedIn, appRoute) {
+        val isAuthenticatedRoute = appRoute == Route.Main.route || appRoute == Route.Onboarding.route
+        if (isSignedIn == false && isAuthenticatedRoute) {
+            navController.navigate(Route.Login.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("prefs", Context.MODE_PRIVATE) }
@@ -63,7 +84,7 @@ fun AppNavGraph(
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Route.AuthCheck.route) {
-            AuthCheckScreen(navController)
+            AuthCheckScreen(navController, sessionViewModel)
         }
 
         composable(Route.Login.route) {
@@ -89,6 +110,15 @@ fun AppNavGraph(
             val navControllerForTabs = rememberNavController()
             val navBackStackEntry by navControllerForTabs.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
+
+            // Notification destinations belong to the authenticated graph. Keep the route pending
+            // until session state has loaded and is still valid, then consume it exactly once.
+            LaunchedEffect(pendingNotificationRoute, isSignedIn) {
+                pendingNotificationRoute?.takeIf { isSignedIn == true }?.let { route ->
+                    navControllerForTabs.navigate(route) { launchSingleTop = true }
+                    onNotificationRouteConsumed()
+                }
+            }
 
             // Route.Main.route 최초 진입 시에만 온보딩 체크
             LaunchedEffect(Unit) {

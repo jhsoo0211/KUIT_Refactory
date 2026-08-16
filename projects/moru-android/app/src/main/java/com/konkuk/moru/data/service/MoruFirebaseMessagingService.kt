@@ -17,14 +17,22 @@ import com.google.firebase.messaging.RemoteMessage
 import com.konkuk.moru.MainActivity
 import com.konkuk.moru.R
 import com.konkuk.moru.domain.repository.FcmRepository
+import com.konkuk.moru.presentation.navigation.NotificationRouteResolver
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
 @AndroidEntryPoint // Hilt 주입을 위해 어노테이션 추가
 class MoruFirebaseMessagingService : FirebaseMessagingService() {
+
+    companion object {
+        private val fallbackNotificationId = AtomicInteger(
+            (System.currentTimeMillis() and Int.MAX_VALUE.toLong()).toInt()
+        )
+    }
 
     @Inject // Repository 주입
     lateinit var fcmRepository: FcmRepository
@@ -55,29 +63,36 @@ class MoruFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // ✅ 데이터 페이로드에서 routineId 추출
-        val routineId = remoteMessage.data["routineId"]
+        val destinationRoute = NotificationRouteResolver.resolve(remoteMessage.data)
 
         remoteMessage.notification?.let {
             val title = it.title ?: "Moru"
             val body = it.body ?: "새로운 알림이 도착했습니다."
 
-            // ✅ sendNotification 함수에 routineId 전달
-            sendNotification(title, body, routineId)
+            val notificationId = remoteMessage.messageId?.hashCode()
+                ?: fallbackNotificationId.incrementAndGet()
+            sendNotification(title, body, destinationRoute, notificationId)
         }
     }
 
-    // ✅ sendNotification 함수가 routineId를 받도록 수정
-    private fun sendNotification(title: String, messageBody: String, routineId: String?) {
+    private fun sendNotification(
+        title: String,
+        messageBody: String,
+        destinationRoute: String?,
+        notificationId: Int
+    ) {
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            // ✅ Intent에 routineId를 추가 데이터로 담기
-            putExtra("ROUTINE_ID", routineId)
+            destinationRoute?.let {
+                putExtra(NotificationRouteResolver.ROUTE_EXTRA_KEY, it)
+            }
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            this,
+            notificationId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val channelId = getString(R.string.default_notification_channel_id)
@@ -107,7 +122,8 @@ class MoruFirebaseMessagingService : FirebaseMessagingService() {
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            NotificationManagerCompat.from(this).notify(0, notificationBuilder.build())
+            // Distinct IDs prevent one routine notification from reusing another route payload.
+            NotificationManagerCompat.from(this).notify(notificationId, notificationBuilder.build())
         }
     }
 }
