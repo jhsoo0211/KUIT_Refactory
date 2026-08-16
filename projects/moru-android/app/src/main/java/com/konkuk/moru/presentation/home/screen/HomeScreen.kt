@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.Divider
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
@@ -28,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +64,7 @@ import com.konkuk.moru.presentation.routinefocus.viewmodel.SharedRoutineViewMode
 import com.konkuk.moru.ui.theme.MORUTheme.colors
 import com.konkuk.moru.ui.theme.MORUTheme.typography
 import com.konkuk.moru.core.datastore.SchedulePreference
+import com.konkuk.moru.core.util.toStableIntId
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -475,7 +476,7 @@ fun HomeScreen(
     }
 
     //탭 선택 상태(오늘,이번주)
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     val finishedId by homeEntry.savedStateHandle
         .getStateFlow<String?>("finishedRoutineId", null)
@@ -601,7 +602,7 @@ fun HomeScreen(
                 }
             }
             item {
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.fillMaxWidth(),
                     color = colors.lightGray,
                     thickness = 1.dp
@@ -883,17 +884,6 @@ fun HomeScreen(
             }
         }
     }
-}
-
-// String ID → 안정적인 Int 키 (기존 Int API/콜백용)
-private fun String.toStableIntId(): Int {
-    this.toLongOrNull()?.let {
-        val mod = (it % Int.MAX_VALUE).toInt()
-        return if (mod >= 0) mod else -mod
-    }
-    var h = 0
-    for (ch in this) h = (h * 31) + ch.code
-    return h
 }
 
 // 오늘 "루틴 목록" 전용 정렬:

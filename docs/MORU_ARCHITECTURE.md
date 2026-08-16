@@ -99,6 +99,7 @@ sequenceDiagram
 - `TokenAuthenticator`는 제한된 횟수 안에서 refresh를 시도합니다. 네트워크 응답을 저장하기 직전 세대값과 기존 token pair를 한 DataStore transaction에서 다시 비교하므로, 대기 중 발생한 로그아웃이나 새 로그인을 과거 응답이 되돌리지 못합니다.
 - 토큰은 소스에 하드코딩하지 않지만 현재 Android Keystore로 암호화되어 있지는 않습니다.
 - FCM data는 `NotificationRouteResolver`가 허용된 상세 route로 정규화하고, service가 이를 `MainActivity` intent에 담습니다. Activity는 인증된 내부 NavGraph가 준비될 때까지 route를 보관한 뒤 한 번만 이동합니다.
+- 알림과 방해 금지 모드 제어 권한은 관련 기능을 위한 선택 사항이며 온보딩 완료를 막지 않습니다. 사용자가 항목을 누르면 기존 알림 권한 요청 또는 방해 금지 설정 진입 동작을 수행합니다.
 - 이 흐름은 코드와 로컬 빌드 범위에서만 확인했으며, 실제 Firebase 수신·알림 클릭·백엔드 토큰 등록은 검증하지 않았습니다.
 
 ## Local configuration
@@ -108,7 +109,7 @@ sequenceDiagram
 ```powershell
 cd projects\moru-android
 Copy-Item local.properties.example local.properties
-.\gradlew.bat testDebugUnitTest lintDebug assembleDebug
+.\gradlew.bat testDebugUnitTest testReleaseUnitTest verifyLintWarningBudget assembleDebug assembleRelease
 ```
 
 `local.properties`에는 개발자별 SDK 경로와 API 주소만 두고 commit하지 않습니다. API 주소는 아래 우선순위로 결정되며 반드시 `https://`로 시작해야 합니다.
@@ -145,12 +146,12 @@ Firebase를 연결하려면 각 개발자가 자신의 `app/google-services.json
 로컬과 CI의 기준 명령은 다음과 같습니다.
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug
+./gradlew testDebugUnitTest testReleaseUnitTest verifyLintWarningBudget assembleDebug assembleRelease
 ```
 
-`.github/workflows/moru-android.yml`은 MORU 경로나 workflow가 바뀐 pull request, `main` push, 수동 실행에서 같은 세 작업을 수행합니다. 단위 테스트는 인증 입력 규칙, 인증 헤더·origin 경계, 동일 저장소의 레거시 token 이관, 세션 조건부 교체, 알림 route 해석처럼 Android 런타임에서 분리할 수 있는 정책을 검증합니다. 다음 단계에서는 repository mapper, ViewModel state transition, 실제 인증 갱신과 optimistic update rollback 테스트를 우선 보강합니다.
+`.github/workflows/moru-android.yml`은 MORU 경로나 workflow가 바뀐 pull request, `main` push, 수동 실행에서 같은 다섯 작업을 수행합니다. `testDebugUnitTest`와 `testReleaseUnitTest`는 두 build variant의 JVM 정책 테스트를, `verifyLintWarningBudget`은 Lint 오류와 214개 경고 상한을, `assembleDebug`와 `assembleRelease`는 Debug APK와 unsigned Release APK 조립 가능성을 확인합니다. 기존 경고를 숨기지 않고 XML 보고서를 유지하며, 경고가 정리될 때 예산도 함께 낮춰 전체 경고 수가 다시 늘어나는 회귀를 막습니다. 단위 테스트는 인증 입력 규칙, 인증 헤더·origin 경계, 동일 저장소의 레거시 token 이관, 세션 조건부 교체, 알림 route, HTTP·통신 실패 시 스케줄 보존, 비동기 step 선택과 루틴별 상태 격리처럼 Android 런타임에서 분리할 수 있는 정책을 검증합니다. 다음 단계에서는 repository mapper, ViewModel state transition, 실제 인증 갱신과 optimistic update rollback 테스트를 우선 보강합니다.
 
-검증 통과가 의미하는 범위는 JVM 단위 테스트, Android Lint, Debug APK 조립까지입니다. 다음 항목은 별도 환경과 시나리오가 필요하며 현재 완료로 주장하지 않습니다.
+이 gate의 통과 범위는 JVM 단위 테스트, Android Lint, Debug APK와 unsigned Release APK 조립까지입니다. release 조립은 서명이나 배포 가능성을 검증하지 않습니다. 다음 항목은 별도 환경과 시나리오가 필요하며 현재 완료로 주장하지 않습니다.
 
 - 실제 MORU Server API 계약과 전체 사용자 흐름
 - 실제 Firebase 프로젝트의 인증, token 등록, push 수신과 알림 클릭

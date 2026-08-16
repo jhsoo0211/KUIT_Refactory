@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.konkuk.moru.ui.theme.MORUTheme.colors
 import com.konkuk.moru.ui.theme.MORUTheme.typography
+import java.util.Locale
 
 @Composable
 fun DurationPickerDialog(
@@ -157,7 +158,7 @@ private fun AndroidNumberPicker(
                 wrapSelectorWheel = true
                 descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
                 // 두 자리 포맷
-                setFormatter { v -> String.format("%02d", v) }
+                setFormatter { value -> String.format(Locale.getDefault(), "%02d", value) }
                 // 텍스트 크기/색은 테마에 맞춰 시스템이 칠하지만, 제조사별 차이가 있음
                 setOnValueChangedListener { view, _, newVal ->
                     // 스크롤 중 값 변경 시 가벼운 햅틱

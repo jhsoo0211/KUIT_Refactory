@@ -29,6 +29,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Locale
 
 @HiltViewModel
 class RoutineCreateViewModel @Inject constructor(
@@ -186,7 +187,7 @@ class RoutineCreateViewModel @Inject constructor(
             Log.d(TAG, "[vm] confirmTime: invalid index")
             return
         }
-        val formatted = String.format("%02d:%02d:%02d", hour, minute, second)
+        val formatted = String.format(Locale.ROOT, "%02d:%02d:%02d", hour, minute, second)
         stepList[i] = stepList[i].copy(time = formatted)
         Log.d(TAG, "[vm] confirmTime: changed")
     }
@@ -206,7 +207,7 @@ class RoutineCreateViewModel @Inject constructor(
         val h = (total / 3600).toInt()
         val m = ((total % 3600) / 60).toInt()
         val s = (total % 60).toInt()
-        String.format("%02d:%02d:%02d", h, m, s)
+        String.format(Locale.ROOT, "%02d:%02d:%02d", h, m, s)
     } catch (_: Exception) {
         null
     }

@@ -27,14 +27,15 @@ KUIT 5기에서 진행한 Android 학습 기록과 4인 팀 프로젝트 **MORU*
 - `local.properties`와 Firebase 파일이 없는 깨끗한 clone도 컴파일할 수 있도록 설정 분리
 - 로그아웃 뒤 레거시 토큰이 재이관되지 않도록 one-shot migration과 저장소 정리 보강
 - FCM 루틴 상세 deep link를 허용 목록 기반 canonical route resolver로 통합
-- 인증 입력·헤더 경계·레거시 token 이관·세션 교체·알림 route 정책에 단위 테스트 추가
-- 생성물·임시 파일 제거, ignore 규칙과 GitHub Actions 검증 추가
+- 인증·알림 정책, 비파괴 스케줄 변경, 비동기 step 선택 상태에 JVM 테스트 추가
+- 미사용 특수·미디어 권한을 제거하고 알림·방해 금지 권한을 온보딩의 선택 사항으로 정리
+- 공식 Gradle 8.13 Wrapper checksum, Lint 경고 예산과 debug·unsigned release 후보를 확인하는 CI 추가
 
 이 변경은 팀 원본 저장소가 아니라 이 개인 포트폴리오 사본에만 적용했습니다.
 
 ### 검증 결과 (2026-08-16)
 
-포트폴리오 정비가 끝난 동일한 소스에서 `testDebugUnitTest`, `lintDebug`, `assembleDebug`를 강제 재실행했습니다. 5개 정책 영역의 단위 테스트 18개가 모두 통과했고, Lint는 오류 0건, Debug APK 빌드는 성공했습니다. 실제 서버·Firebase·실기기 E2E는 이 결과에 포함하지 않습니다.
+포트폴리오 정비가 끝난 동일한 소스에서 CI와 같은 다섯 작업을 캐시 없이 재실행했습니다. Debug와 Release 각각 8개 suite·32개 테스트가 모두 통과했고, Lint는 오류 0건·경고 214건으로 기존 231건보다 줄었습니다. 경고 예산도 `214/214`로 통과했으며 Debug와 unsigned Release APK가 모두 조립됐습니다. 실제 서버·Firebase·실기기, release 서명·업로드·배포는 검증 범위에 포함하지 않습니다.
 
 ## Learning timeline
 

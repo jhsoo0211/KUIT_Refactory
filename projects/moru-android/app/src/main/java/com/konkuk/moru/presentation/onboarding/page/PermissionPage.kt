@@ -24,12 +24,9 @@ import com.konkuk.moru.presentation.onboarding.permission.rememberPermissionCont
 fun PermissionPage(
     onNext: () -> Unit,
 ) {
-    // [변경] 내부 로직 삭제 → 컨트롤러에서 다 처리
     val controller = rememberPermissionController()
     val permissions = listOf(
         Triple("푸시 알림 허용", "루틴 실천에 도움되는 알림을 받으세요!", PermissionType.PUSH_NOTIFICATION),
-        Triple("시간 알림 허용", "루틴 시간에 맞춰 알림을 받으세요!", PermissionType.SCHEDULE_EXACT_ALARM),
-        Triple("다른 앱 위 표시 허용", "루틴 실천 시, 집중하기 위해 필요해요!", PermissionType.OVERLAY),
         Triple("방해 금지 모드 제어 허용", "루틴 실천 중 불필요한 알림을 막아요!", PermissionType.DO_NOT_DISTURB)
     )
 
@@ -58,9 +55,9 @@ fun PermissionPage(
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp)
                 ) {
-                    Text(text = "앱 이용을 위해", style = typography.body_SB_24)
+                    Text(text = "더 나은 루틴 경험을 위해", style = typography.body_SB_24)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "아래 접근 권한 허용이 필요해요", style = typography.body_SB_24)
+                    Text(text = "필요한 권한만 선택해 주세요", style = typography.body_SB_24)
                     Spacer(modifier = Modifier.height(60.dp))
 
                     permissions.forEach { (title, desc, type) ->
@@ -68,9 +65,8 @@ fun PermissionPage(
                             title = title,
                             description = desc,
                             type = type,
-                            // [변경] 컨트롤러 상태 사용
                             isGranted = controller.states[type] == true,
-                            onClick = { controller.onClick(type) } // [변경] 컨트롤러 콜백
+                            onClick = { controller.onClick(type) }
                         )
                         Spacer(modifier = Modifier.height(32.dp))
                     }
@@ -88,7 +84,7 @@ fun PermissionPage(
                     Spacer(modifier = Modifier.height(35.dp))
                     MoruButtonTypeA(
                         text = "다음",
-                        enabled = controller.allGranted, // [변경]
+                        enabled = true,
                         onClick = onNext
                     )
                 }

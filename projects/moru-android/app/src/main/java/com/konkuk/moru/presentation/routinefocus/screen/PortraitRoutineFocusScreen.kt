@@ -67,7 +67,6 @@ import com.konkuk.moru.R
 import com.konkuk.moru.presentation.home.RoutineStepData
 import com.konkuk.moru.presentation.home.component.RoutineResultRow
 import com.konkuk.moru.presentation.routinefocus.component.FocusOnboardingPopup
-import com.konkuk.moru.presentation.routinefocus.component.AppIcon
 import com.konkuk.moru.presentation.routinefocus.component.RoutineTimelineItem
 import com.konkuk.moru.presentation.routinefocus.component.SettingSwitchGroup
 import com.konkuk.moru.presentation.routinefeed.data.AppDto
@@ -76,12 +75,13 @@ import com.konkuk.moru.presentation.routinefocus.viewmodel.RoutineFocusViewModel
 import com.konkuk.moru.presentation.routinefocus.viewmodel.SharedRoutineViewModel
 import com.konkuk.moru.ui.theme.MORUTheme.colors
 import com.konkuk.moru.ui.theme.MORUTheme.typography
+import java.util.Locale
 
 // 총 소요시간 계산하는 함수
 fun formatTotalTime(seconds: Int): String {
     val minutes = seconds / 60
     val secs = seconds % 60
-    return String.format("%02dm %02ds", minutes, secs)
+    return String.format(Locale.ROOT, "%02dm %02ds", minutes, secs)
 }
 
 // 현재 step에 따라 보여줄 step들을 계산하는 함수
@@ -188,7 +188,7 @@ fun formatTime(seconds: Int): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
-    return String.format("%02d:%02d:%02d", hours, minutes, secs)
+    return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, secs)
 }
 
 // 진동 효과 함수
@@ -201,33 +201,27 @@ fun triggerVibration(context: Context) {
         @Suppress("DEPRECATION")
         context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
+    vibrator.vibrate(VibrationEffect.createOneShot(50L, VibrationEffect.DEFAULT_AMPLITUDE))
 }
 
 // 방해금지 모드 제어 함수
 fun toggleDoNotDisturb(context: Context, enable: Boolean) {
     try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Android 6.0 이상에서는 알림 정책 접근 권한이 필요
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
 
-            if (notificationManager.isNotificationPolicyAccessGranted) {
-                if (enable) {
-                    // 방해금지 모드 활성화
-                    notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_NONE)
-                } else {
-                    // 방해금지 모드 비활성화
-                    notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_ALL)
-                }
+        if (notificationManager.isNotificationPolicyAccessGranted) {
+            if (enable) {
+                notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_NONE)
             } else {
-                // 권한이 없으면 설정 화면으로 이동
-                val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                context.startActivity(intent)
+                notificationManager.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_ALL)
             }
+        } else {
+            val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
         }
     } catch (e: Exception) {
-        // 권한이 없거나 설정할 수 없는 경우
         Log.e("PortraitRoutineFocusScreen", "방해금지 모드 변경 실패: exception=${e.javaClass.simpleName}")
     }
 }
@@ -1017,7 +1011,7 @@ fun PortraitRoutineFocusScreen(
                         .padding(top = 80.dp, end = 17.dp)
                         .width(149.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFFFFFF).copy(alpha = 0.75f))
+                        .background(Color(0xFFFFFFFF).copy(alpha = 0.75f))
                         .clickable(
                             onClick = { /* Do nothing */ }
                         )

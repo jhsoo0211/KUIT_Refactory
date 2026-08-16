@@ -66,7 +66,7 @@ fun FollowScreenContent(
                 containerColor = Color.White,
                 contentColor = Color.Black,
                 indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
+                    TabRowDefaults.SecondaryIndicator(
                         Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
                         color = Color.Black
                     )

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.konkuk.moru.core.util.toStableIntId
 import com.konkuk.moru.data.model.Routine
 import java.time.DayOfWeek
 
@@ -42,15 +43,6 @@ fun RoutineCardList(
         }
 
     }
-}
-private fun String.toStableIntId(): Int {
-    this.toLongOrNull()?.let {
-        val mod = (it % Int.MAX_VALUE).toInt()
-        return if (mod >= 0) mod else -mod
-    }
-    var h = 0
-    for (ch in this) h = (h * 31) + ch.code
-    return h
 }
 
 @Preview

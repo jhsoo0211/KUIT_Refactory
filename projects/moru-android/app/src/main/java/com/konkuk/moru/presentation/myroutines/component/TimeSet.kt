@@ -65,8 +65,8 @@ fun TimePickerSheetContent(
 
     // 2) remember에 초기값 바인딩 (초기값이 바뀌면 재설정 되도록 key 지정)
     var selectedAmPm by remember(initialTime) { mutableStateOf(initAmPm) }
-    var selectedHour by remember(initialTime) { mutableStateOf(initHour12) }
-    var selectedMinute by remember(initialTime) { mutableStateOf(initMinute) }
+    var selectedHour by remember(initialTime) { mutableIntStateOf(initHour12) }
+    var selectedMinute by remember(initialTime) { mutableIntStateOf(initMinute) }
     var selectedDays by remember(initialDays) { mutableStateOf(initialDays) }
     var repeatMode by remember { mutableStateOf(RepeatMode.NONE) }
     var isAlarmOn by remember(initialAlarm) { mutableStateOf(initialAlarm) }

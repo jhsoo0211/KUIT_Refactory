@@ -11,6 +11,7 @@ import com.konkuk.moru.presentation.myroutines.screen.MyRoutinesUiState
 import com.konkuk.moru.presentation.myroutines.screen.SortOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.onStart
 
 
 @HiltViewModel
+@OptIn(FlowPreview::class)
 class MyRoutinesViewModel @Inject constructor(
     private val repo: MyRoutineRepository
 ) : ViewModel() {

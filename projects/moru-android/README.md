@@ -42,7 +42,7 @@ AGP 8.11은 Windows의 비ASCII 프로젝트 경로를 차단합니다. Windows�
 3. git-ignored `local.properties`: `base.url=https://api.example.com/`
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug
+./gradlew testDebugUnitTest testReleaseUnitTest verifyLintWarningBudget assembleDebug assembleRelease
 ```
 
 Windows PowerShell에서는 같은 위치에서 `./gradlew` 대신 `.\gradlew.bat`을 사용합니다. 설정 우선순위와 변경 절차는 [아키텍처·개발 가이드](../../docs/MORU_ARCHITECTURE.md#local-configuration)를 참고하세요.
@@ -51,24 +51,27 @@ Firebase 기능을 실제로 사용하려면 본인 프로젝트의 `app/google-
 
 ### Verified on 2026-08-16
 
-최종 소스를 기준으로 캐시를 사용하지 않고 세 작업을 함께 재실행했습니다.
+최종 소스를 기준으로 캐시를 사용하지 않고 CI와 같은 다섯 작업을 함께 재실행했습니다.
 
-- `testDebugUnitTest`: 18 tests, failures 0, errors 0, skipped 0
-- `lintDebug`: 0 errors, 231 warnings, 7 hints
-- `assembleDebug`: 성공, APK 38,182,379 bytes
-- APK SHA-256: `ED01678E37D5E4353354AC2DC28B372BB487F65E51307F35367BD2CA10F44326`
+- `testDebugUnitTest`: 8 suites, 32 tests, failures 0, errors 0, skipped 0
+- `testReleaseUnitTest`: 8 suites, 32 tests, failures 0, errors 0, skipped 0
+- `verifyLintWarningBudget`: 0 errors, 214 warnings, budget `214/214`
+- `assembleDebug`: 성공, APK 38,183,360 bytes, SHA-256 `F1BAC7E14EDE19E057C886979FB6677241326B8B872BC178BA0FCE6BF619AB5D`
+- `assembleRelease`: 성공, unsigned APK 29,799,274 bytes, SHA-256 `D0AFD12D32C6FC31959541BCF2E946654733BC66252E7AE0BDBB5FE254EFC066`
 
-이 검증은 로컬 컴파일·단위 테스트·정적 분석 범위입니다. 실제 서버, Firebase, 실기기 알림, release 서명과 전체 사용자 흐름은 검증하지 않았습니다.
+위 결과는 로컬 JVM 테스트·정적 분석·Debug 및 unsigned Release 조립 범위입니다. 실제 서버, Firebase, 실기기 알림, release 서명과 전체 사용자 흐름은 검증하지 않았습니다.
 
 ## Portfolio hardening
 
 - trust-all 인증서·hostname verifier와 cleartext 허용 제거
 - 하드코딩 인증 token과 인증·FCM·사용자 작성 내용·설치 앱 목록 로그 제거
 - 선택적 로컬 설정과 HTTPS-only base URL 적용
-- 중복 permission, release 산출물, 임시 파일 정리
+- 미사용 exact alarm·overlay·미디어 읽기 permission과 관련 요청을 제거하고 알림·방해 금지 권한을 온보딩 선택 사항으로 변경
+- release 산출물과 임시 파일 정리
 - FCM deep link를 허용 목록 기반 canonical route resolver로 통합
-- 인증 입력·헤더 경계·레거시 token 이관·세션 교체·알림 route에 단위 테스트 추가
-- PR 및 `main` 변경 시 unit test, Lint와 debug assemble을 실행하는 CI 추가
+- 인증 입력·헤더 경계·레거시 token 이관·세션 교체·알림 route, 스케줄 보존, step 선택 상태에 단위 테스트 추가
+- PR 및 `main` 변경 시 debug/release unit test, Lint 경고 예산, Debug APK와 unsigned Release APK 조립을 실행하는 CI 추가
+- Gradle 8.13 Wrapper JAR과 distribution checksum을 공식 값으로 고정
 
 현재 인증 token은 DataStore에 저장됩니다. 이번 정리에서는 코드·로그 노출을 줄였지만 Android Keystore 기반 저장 암호화까지 구현한 것은 아닙니다.
 
@@ -76,7 +79,7 @@ Firebase 기능을 실제로 사용하려면 본인 프로젝트의 `app/google-
 
 팀 원본의 기준점은 [`master@9a6a7d1`](https://github.com/KUIT-MORU/KUIT_MORU_Android/commit/9a6a7d1ff7a0070e5e860ba7b9336c1ceaab643f)입니다. 이 디렉터리의 후속 개선은 개인 포트폴리오 사본에만 적용되며 원본 팀 저장소를 바꾸지 않습니다. 서버 코드는 포함하지 않았으므로 실제 데이터 흐름에는 별도 팀 백엔드와 유효한 구성이 필요합니다.
 
-컴파일과 단위 테스트 성공은 실제 서버, Firebase, 알림 클릭, release 서명 또는 전체 사용자 흐름 E2E까지 검증했다는 뜻은 아닙니다.
+unsigned `assembleRelease` 성공은 release variant가 서명 없이 조립된다는 뜻입니다. 실제 서버, Firebase, 알림 클릭, 실기기 권한·백그라운드 동작, release 서명·업로드 또는 전체 사용자 흐름 E2E까지 검증했다는 뜻은 아닙니다.
 
 - [개인 기여 PR](../../docs/CONTRIBUTIONS.md)
 - [원본과 import 기록](../../docs/SOURCE_MANIFEST.md)

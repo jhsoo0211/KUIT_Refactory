@@ -44,5 +44,5 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Test, lint, and assemble debug APK
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug --stacktrace
+      - name: Verify debug and unsigned release candidates
+        run: ./gradlew testDebugUnitTest testReleaseUnitTest verifyLintWarningBudget assembleDebug assembleRelease --stacktrace

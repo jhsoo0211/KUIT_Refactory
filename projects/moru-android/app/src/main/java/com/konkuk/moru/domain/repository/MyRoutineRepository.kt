@@ -29,7 +29,7 @@ interface MyRoutineRepository {
     suspend fun getSchedules(routineId: String): List<MyRoutineSchedule>
 
 
-    // ✅ 안전 삭제 (스케줄 먼저 지우고 재시도)
+    // Routine DELETE를 한 번만 요청한다. 2xx/404만 성공이며 HTTP·통신 실패 시 연관 스케줄을 보존한다.
     suspend fun deleteRoutineSafe(routineId: String): Boolean
     suspend fun deleteRoutine(routineId: String)
 

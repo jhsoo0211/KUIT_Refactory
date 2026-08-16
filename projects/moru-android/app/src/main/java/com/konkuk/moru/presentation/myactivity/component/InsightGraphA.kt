@@ -135,7 +135,7 @@ fun InsightGraphA(
                 val prev = normalizedPoints[i - 1]
                 val curr = normalizedPoints[i]
                 val mid = Offset((prev.x + curr.x) / 2, (prev.y + curr.y) / 2)
-                path.quadraticBezierTo(prev.x, prev.y, mid.x, mid.y)
+                path.quadraticTo(prev.x, prev.y, mid.x, mid.y)
             }
 
             Canvas(modifier = Modifier.fillMaxSize()) {

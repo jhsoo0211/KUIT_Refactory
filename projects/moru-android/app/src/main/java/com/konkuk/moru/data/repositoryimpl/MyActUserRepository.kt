@@ -23,16 +23,14 @@ class MyActUserRepository @Inject constructor(
         )
         val res = service.patchMe(body)
         if (!res.isSuccessful) {
-            val raw = res.errorBody()?.string().orEmpty()
-            throw IllegalStateException("프로필 수정 실패: ${res.code()} ${res.message()} | $raw")
+            throw IllegalStateException("프로필 수정 실패: HTTP ${res.code()}")
         }
     }
 
     suspend fun isNicknameAvailable(nickname: String): Boolean {
         val res = service.checkNickname(nickname.trim())
         if (!res.isSuccessful) {
-            val raw = res.errorBody()?.string().orEmpty()
-            throw IllegalStateException("닉네임 확인 실패: ${res.code()} ${res.message()} | $raw")
+            throw IllegalStateException("닉네임 확인 실패: HTTP ${res.code()}")
         }
         return res.body()?.available == true
     }

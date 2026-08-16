@@ -98,6 +98,8 @@ dependencies {
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
+    testImplementation(platform(libs.okhttp.bom))
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -153,4 +155,30 @@ dependencies {
 
 configurations.all {
     exclude(group = "com.intellij", module = "annotations")
+}
+
+val lintWarningBudget = 214
+
+tasks.register("verifyLintWarningBudget") {
+    group = "verification"
+    description = "Fails when Android Lint warnings exceed the reviewed quality baseline."
+    dependsOn("lintDebug")
+
+    val lintReport = layout.buildDirectory.file("reports/lint-results-debug.xml")
+    inputs.file(lintReport)
+
+    doLast {
+        val reportFile = lintReport.get().asFile
+        check(reportFile.isFile) { "Lint XML report was not generated: $reportFile" }
+
+        val warningCount = Regex("""severity="Warning"""")
+            .findAll(reportFile.readText())
+            .count()
+        check(warningCount <= lintWarningBudget) {
+            "Lint warning budget exceeded: $warningCount > $lintWarningBudget. " +
+                "Fix the new warning or intentionally lower the budget after cleanup."
+        }
+
+        logger.lifecycle("Lint warning budget: $warningCount/$lintWarningBudget")
+    }
 }
