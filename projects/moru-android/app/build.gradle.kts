@@ -1,3 +1,4 @@
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -20,16 +21,32 @@ val localProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
-val baseUrl: String = (
+val configuredBaseUrl = (
     providers.gradleProperty("MORU_BASE_URL").orNull
         ?: providers.environmentVariable("MORU_BASE_URL").orNull
         ?: localProps.getProperty("base.url")
         ?: "https://example.invalid/"
-    ).trim().let {
-    require(it.startsWith("https://")) {
-        "MORU_BASE_URL (or base.url) must use HTTPS"
+    ).trim()
+
+// Validate before BuildConfig generation so no variant can silently use cleartext or credentials.
+val baseUrl: String = configuredBaseUrl.let { rawBaseUrl ->
+    val normalized = if (rawBaseUrl.endsWith("/")) rawBaseUrl else "$rawBaseUrl/"
+    val uri = runCatching { URI(normalized) }.getOrElse {
+        throw GradleException("MORU_BASE_URL (or base.url) must be a valid HTTPS URL", it)
     }
-    if (it.endsWith("/")) it else "$it/"
+    require(
+        uri.scheme == "https" &&
+            !uri.host.isNullOrBlank() &&
+            uri.userInfo == null &&
+            uri.query == null &&
+            uri.fragment == null &&
+            (uri.rawPath.isNullOrEmpty() || uri.rawPath == "/")
+    ) {
+        "MORU_BASE_URL (or base.url) must be an HTTPS origin without credentials, path, query, or fragment"
+    }
+    // Services currently mix absolute and relative paths, so one origin root is the only
+    // unambiguous base. Retrofit also requires its trailing slash.
+    normalized
 }
 
 android {

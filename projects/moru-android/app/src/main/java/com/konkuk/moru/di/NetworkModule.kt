@@ -36,6 +36,13 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import javax.inject.Named
 
+/**
+ * Owns MORU's HTTP trust boundary.
+ *
+ * Both clients deliberately use OkHttp's platform TLS configuration. The authless client omits
+ * application credentials and refresh behavior; it does not install a permissive trust manager,
+ * hostname verifier, or any other transport-security bypass.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -46,7 +53,7 @@ object NetworkModule {
     fun provideOBUserServiceAuthed(@Named("jsonRetrofit") retrofit: Retrofit): OBUserService =
         retrofit.create(OBUserService::class.java)
 
-    // [추가] 무인증용 OBUserService (닉네임 체크 전용)
+    // Nickname availability is public, so this service must never attach session credentials.
     @Provides
     @Singleton
     @Named("obUserAuthless")
@@ -84,6 +91,11 @@ object NetworkModule {
     @Singleton
     fun provideBaseUrl(): String = BuildConfig.BASE_URL
 
+    /**
+     * Logs request/response metadata only in debug builds and never logs bodies.
+     * Authorization remains redacted as defense in depth if the level changes during debugging;
+     * release builds disable HTTP logging completely.
+     */
     @Provides
     @Singleton
     fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
@@ -220,7 +232,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideImageService(retrofit: Retrofit): ImageService =
-        retrofit.create(ImageService::class.java) // [추가]
+        retrofit.create(ImageService::class.java)
 
     @Singleton
     @Provides

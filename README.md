@@ -18,21 +18,23 @@ KUIT 5기에서 진행한 Android 학습 기록과 4인 팀 프로젝트 **MORU*
 - **개인 기여:** My Routine, Routine Feed 상세, 검색·프로필·팔로우, 공통 Routine 모델과 Navigation, 서버 연동 및 FCM 흐름
 - **기여 근거:** 작성자 명의로 병합된 PR 16개 — [상세 보기](docs/CONTRIBUTIONS.md)
 - **기술:** Kotlin, Jetpack Compose, MVVM, Hilt, Retrofit, OkHttp, Kotlin Serialization, DataStore, Firebase
+- **구조:** 단일 `:app`의 Clean-ish MVVM — [실제 계층과 남은 결합 보기](docs/MORU_ARCHITECTURE.md)
 
 ### 포트폴리오 정비에서 개선한 부분
 
 - 모든 인증서와 호스트를 신뢰하던 HTTP 클라이언트를 제거하고 표준 TLS 검증으로 복구
 - 하드코딩 토큰 fallback과 민감한 인증·FCM·사용자 작성 내용 로그 제거
 - `local.properties`와 Firebase 파일이 없는 깨끗한 clone도 컴파일할 수 있도록 설정 분리
-- 존재하지 않는 경로로 이동하던 FCM 루틴 상세 deep link 수정
-- 로그인·회원가입 입력 규칙을 공통 validator로 분리하고 단위 테스트 추가
+- 로그아웃 뒤 레거시 토큰이 재이관되지 않도록 one-shot migration과 저장소 정리 보강
+- FCM 루틴 상세 deep link를 허용 목록 기반 canonical route resolver로 통합
+- 인증 입력·헤더 경계·레거시 token 이관·세션 교체·알림 route 정책에 단위 테스트 추가
 - 생성물·임시 파일 제거, ignore 규칙과 GitHub Actions 검증 추가
 
 이 변경은 팀 원본 저장소가 아니라 이 개인 포트폴리오 사본에만 적용했습니다.
 
 ### 검증 결과 (2026-08-16)
 
-포트폴리오 정비가 끝난 동일한 소스에서 `testDebugUnitTest`, `lintDebug`, `assembleDebug`를 강제 재실행했습니다. 인증 입력 검증 테스트 3개가 모두 통과했고, Lint는 오류 0건, Debug APK 빌드는 성공했습니다. 실제 서버·Firebase·실기기 E2E는 이 결과에 포함하지 않습니다.
+포트폴리오 정비가 끝난 동일한 소스에서 `testDebugUnitTest`, `lintDebug`, `assembleDebug`를 강제 재실행했습니다. 5개 정책 영역의 단위 테스트 18개가 모두 통과했고, Lint는 오류 0건, Debug APK 빌드는 성공했습니다. 실제 서버·Firebase·실기기 E2E는 이 결과에 포함하지 않습니다.
 
 ## Learning timeline
 
@@ -53,18 +55,22 @@ KUIT 5기에서 진행한 Android 학습 기록과 4인 팀 프로젝트 **MORU*
 ## Repository map
 
 ```text
-.
-├─ projects/moru-android/       # 대표 팀 프로젝트와 후속 개선
-├─ coursework/week01-09.../     # 주차별 독립 학습 스냅샷
-├─ reference/project-scaffold/  # KUIT 프로젝트 시작 템플릿
-├─ docs/                        # 기여 근거와 출처 기록
-└─ .github/workflows/           # MORU 자동 검증
+KUIT_Refactory/
+├─ projects/moru-android/        # 대표 팀 프로젝트와 후속 개선
+├─ coursework/week01-.../        # 1~9주차 독립 Gradle 프로젝트
+├─ reference/project-scaffold/   # KUIT 프로젝트 시작 스냅샷
+├─ docs/                         # 구조, 기여 근거와 출처 기록
+└─ .github/workflows/            # MORU 자동 검증
 ```
 
+- [저장소 구조와 학습 경로](docs/REPOSITORY_GUIDE.md)
 - [MORU 실행 및 구조](projects/moru-android/README.md)
+- [MORU 아키텍처와 개발 절차](docs/MORU_ARCHITECTURE.md)
 - [개인 기여 근거](docs/CONTRIBUTIONS.md)
 - [원본 저장소·브랜치·SHA](docs/SOURCE_MANIFEST.md)
 - [저작권 및 출처 고지](NOTICE.md)
+
+저장소 루트에서 전체를 한 번에 빌드하는 구성은 아닙니다. 각 과제와 MORU는 자체 Gradle wrapper를 가진 독립 프로젝트이며, 계속 발전시키는 대상은 `projects/moru-android`입니다.
 
 ## Scope
 

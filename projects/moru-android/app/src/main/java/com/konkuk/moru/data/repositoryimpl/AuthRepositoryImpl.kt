@@ -36,7 +36,7 @@ class AuthRepositoryImpl @Inject constructor(
             val access = res.token.accessToken
             val refresh = res.token.refreshToken
 
-            tokenManager.saveTokens(access, refresh) // [유지]
+            tokenManager.saveTokens(access, refresh)
 
             Result.success(access to refresh)
         } catch (e: HttpException) {
@@ -57,7 +57,7 @@ class AuthRepositoryImpl @Inject constructor(
             val ms = SystemClock.elapsedRealtime() - t0
             Log.d("signup", "signup request succeeded in ${ms}ms")
 
-            tokenManager.saveTokens(resp.accessToken, resp.refreshToken) // [유지]
+            tokenManager.saveTokens(resp.accessToken, resp.refreshToken)
             Log.d("signup", "tokens saved")
             Result.success(Unit)
         } catch (e: HttpException) {

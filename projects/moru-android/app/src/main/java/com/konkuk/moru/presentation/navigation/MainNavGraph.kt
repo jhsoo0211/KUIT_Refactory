@@ -361,9 +361,11 @@ fun MainNavGraph(
 
         composable(
             route = Route.RoutineFeedDetail.route,
-            arguments = listOf(navArgument("routineId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument(Route.RoutineFeedDetail.KEY) { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-            val routineId = backStackEntry.arguments?.getString("routineId")
+            val routineId = backStackEntry.arguments?.getString(Route.RoutineFeedDetail.KEY)
             if (routineId != null) {
                 RoutineDetailScreen(
                     routineId = routineId,
@@ -386,7 +388,7 @@ fun MainNavGraph(
             val parentEntry = remember(backStackEntry) {
                 navController.getBackStackEntry(Route.RoutineFeed.route)
             }
-            val feedViewModel: RoutineFeedViewModel = hiltViewModel(parentEntry) // ✅ [추가]
+            val feedViewModel: RoutineFeedViewModel = hiltViewModel(parentEntry)
             val uiState by feedViewModel.uiState.collectAsState()
 
             val routinesToShow = remember(uiState, title) {
@@ -424,7 +426,7 @@ fun MainNavGraph(
             )
         }
 
-        // [추가] UserProfileScreen 내비게이션 설정
+        // Keep profile state scoped to this destination while passing the explicit owner ID.
         composable(
             route = Route.MyRoutineDetail.route,
             arguments = listOf(navArgument(Route.MyRoutineDetail.KEY) { type = NavType.StringType })
@@ -454,7 +456,7 @@ fun MainNavGraph(
             UserProfileScreen(navController = navController)
         }
 
-        // [추가] FollowScreen 내비게이션 설정
+        // The selected tab travels in the route so process restoration is deterministic.
         composable(
             route = Route.Follow.route,
             arguments = listOf(

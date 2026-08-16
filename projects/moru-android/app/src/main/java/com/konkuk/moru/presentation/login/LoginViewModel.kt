@@ -3,7 +3,6 @@ package com.konkuk.moru.presentation.login
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.konkuk.moru.core.datastore.LoginPreference
 import com.konkuk.moru.core.datastore.OnboardingPreference
 import com.konkuk.moru.data.repositoryimpl.AuthRepository as ImplAuthRepository
 import com.konkuk.moru.domain.repository.UserRepository
@@ -35,13 +34,10 @@ class LoginViewModel @Inject constructor(
                 val resp = authRepository.loginAndSaveTokens(context, email, password)
 
                 if (resp.isOnboarding) {
-                    OnboardingPreference.setOnboardingComplete(context) // [유지]
+                    // Preserve the server's completed-onboarding state across process restarts.
+                    OnboardingPreference.setOnboardingComplete(context)
                 }
 
-                LoginPreference.setLoggedIn(context, true)             // [유지]
-                // LoginPreference.saveAccessToken(...), saveRefreshToken(...)  // [삭제] 토큰은 TokenManager가 담당
-
-                userSessionManager.setLoggedIn(true)
                 _isLoggedIn.value = true
 
                 runCatching { userRepository.getUserProfile() }

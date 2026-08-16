@@ -15,23 +15,20 @@ import androidx.activity.OnBackPressedCallback
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
-import com.konkuk.moru.core.datastore.LoginPreference
-import com.konkuk.moru.core.datastore.OnboardingPreference
 import com.konkuk.moru.presentation.navigation.AppNavGraph
-import com.konkuk.moru.presentation.navigation.Route
+import com.konkuk.moru.presentation.navigation.NotificationRouteResolver
 import com.konkuk.moru.presentation.routinefocus.viewmodel.RoutineFocusViewModel
 import com.konkuk.moru.ui.theme.MORUTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val focusViewModel: RoutineFocusViewModel by viewModels()
     private var navController: androidx.navigation.NavHostController? = null
+    private var pendingNotificationRoute by mutableStateOf<String?>(null)
 
     // --- FCM 알림 권한 요청 로직 추가 ---
     private val requestPermissionLauncher = registerForActivityResult(
@@ -123,49 +120,48 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ✅✅✅ 1. 오류 수정: Intent?를 Intent로 변경 ✅✅✅
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        updatePendingNotificationRoute(intent)
     }
 
+    private fun updatePendingNotificationRoute(intent: Intent) {
+        NotificationRouteResolver.resolve(
+            mapOf(
+                NotificationRouteResolver.ROUTE_EXTRA_KEY to
+                    intent.getStringExtra(NotificationRouteResolver.ROUTE_EXTRA_KEY),
+                NotificationRouteResolver.ROUTINE_ID_KEY to
+                    intent.getStringExtra(NotificationRouteResolver.ROUTINE_ID_KEY),
+                NotificationRouteResolver.LEGACY_ROUTINE_ID_KEY to
+                    intent.getStringExtra(NotificationRouteResolver.LEGACY_ROUTINE_ID_KEY)
+            )
+        )?.let { pendingNotificationRoute = it }
+    }
+
+    private fun consumePendingNotificationRoute() {
+        pendingNotificationRoute = null
+        intent.removeExtra(NotificationRouteResolver.ROUTE_EXTRA_KEY)
+        intent.removeExtra(NotificationRouteResolver.ROUTINE_ID_KEY)
+        intent.removeExtra(NotificationRouteResolver.LEGACY_ROUTINE_ID_KEY)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         askNotificationPermission()
         setupBackPressHandler()
+        updatePendingNotificationRoute(intent)
 
         setContent {
             MORUTheme {
                 val navController = rememberNavController()
                 this@MainActivity.navController = navController
-                val context = applicationContext
-                val isLoggedInState = remember { mutableStateOf(false) }
-                var isOnboardingComplete by remember { mutableStateOf(false) }
-
-                LaunchedEffect(Unit) {
-                    isOnboardingComplete = OnboardingPreference
-                        .isOnboardingComplete(applicationContext)
-                        .first()
-                    isLoggedInState.value = LoginPreference.isLoggedIn(context).first()
-                }
-
                 AppNavGraph(
                     navController = navController,
-                    routineFocusViewModel = focusViewModel
+                    routineFocusViewModel = focusViewModel,
+                    pendingNotificationRoute = pendingNotificationRoute,
+                    onNotificationRouteConsumed = ::consumePendingNotificationRoute
                 )
-
-                // ✅✅✅ 2. 알림 클릭 시 전달된 데이터 처리 로직 추가 ✅✅✅
-                // LaunchedEffect의 key를 intent로 설정하여 새 인텐트가 들어올 때마다 이 블록이 다시 실행되도록 합니다.
-                LaunchedEffect(key1 = intent) {
-                    val routineId = intent.getStringExtra("ROUTINE_ID")
-                    if (!routineId.isNullOrEmpty()) {
-                        navController.navigate(Route.RoutineFeedDetail.createRoute(routineId))
-
-                        // ✅ 처리가 끝난 인텐트의 데이터를 지워 중복 실행을 방지합니다.
-                        intent.removeExtra("ROUTINE_ID")
-                    }
-                }
 
                 LaunchedEffect(focusViewModel.isLandscapeMode) {
                     val newOrientation = if (focusViewModel.isLandscapeMode) {

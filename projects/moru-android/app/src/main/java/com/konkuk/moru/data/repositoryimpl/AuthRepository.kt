@@ -5,20 +5,20 @@ import com.konkuk.moru.data.dto.request.LoginRequestDto
 import com.konkuk.moru.data.dto.response.login.LoginResponseDto
 import com.konkuk.moru.data.dto.response.UserProfile.UserProfileResponse
 import com.konkuk.moru.data.service.AuthService
-import com.konkuk.moru.data.token.TokenManager   // [추가]
+import com.konkuk.moru.data.token.TokenManager
 import javax.inject.Inject
 import retrofit2.HttpException
 
 class AuthRepository @Inject constructor(
     private val service: AuthService,
-    private val tokenManager: TokenManager       // [추가]
+    private val tokenManager: TokenManager
 ) {
     suspend fun getUserProfile(): UserProfileResponse {
         return service.getUserProfile()
     }
 
     suspend fun loginAndSaveTokens(
-        context: Context, // [유지] 시그니처 유지(호출부 영향 최소화)
+        context: Context,
         email: String,
         password: String
     ): LoginResponseDto {
@@ -35,11 +35,11 @@ class AuthRepository @Inject constructor(
 
         val loginResponse = response.body() ?: throw Exception("응답 데이터가 없습니다.")
 
-        // [변경] TokenPreference → TokenManager 단일 저장소로 통일
+        // Keep login, refresh, request interception, and logout on one token source of truth.
         tokenManager.saveTokens(
             loginResponse.token.accessToken,
             loginResponse.token.refreshToken
-        ) // [변경]
+        )
 
         return loginResponse
     }

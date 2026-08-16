@@ -27,8 +27,11 @@ sealed class Route(
     data object RoutineFeed : Route(route = "routine_feed")
 
     data object RoutineSearch : Route("routine_search")
-    data object RoutineFeedDetail : Route(route = "routine_feed_detail/{routineId}") {
-        fun createRoute(routineId: String) = "routine_feed_detail/${Uri.encode(routineId)}"
+    data object RoutineFeedDetail : Route(route = CanonicalRoutes.ROUTINE_FEED_DETAIL_PATTERN) {
+        const val KEY = CanonicalRoutes.ROUTINE_ID_ARGUMENT
+
+        /** Callers pass a raw server ID; path-segment encoding happens here exactly once. */
+        fun createRoute(routineId: String) = CanonicalRoutes.routineFeedDetail(routineId)
     }
 
     data object RoutineFeedRec : Route(route = "routine_feed_rec/{title}") {
@@ -38,11 +41,11 @@ sealed class Route(
         }
     }
 
-    object Follow : Route("follow/{userId}/{selectedTab}") { // [수정] userId 추가
+    object Follow : Route("follow/{userId}/{selectedTab}") {
         fun createRoute(userId: String?, selectedTab: String) = "follow/$userId/$selectedTab"
     }
 
-    // [추가] UserProfileScreen 경로 정의 (어떤 유저의 프로필인지 'userId' 파라미터 추가)
+    // The profile owner is explicit so the destination remains restorable.
     object UserProfile : Route("user_profile/{userId}") {
         fun createRoute(userId: String) = "user_profile/$userId"
     }
@@ -85,7 +88,6 @@ sealed class Route(
 
 
     object TagSearch {
-        // [수정] 베이스 경로만
         const val route = "tag_search"
 
         // 이동용 URL 생성기
@@ -93,7 +95,7 @@ sealed class Route(
             "tag_search?originalQuery=${java.net.URLEncoder.encode(originalQuery, "UTF-8")}"
     }
 
-    // [추가] 태그 전용 검색
+    // Tag search has separate state and therefore uses its own destination.
     data object RoutineTagSearch : Route("routine_tag_search")
 
     object RoutineFeedDetail1 {
