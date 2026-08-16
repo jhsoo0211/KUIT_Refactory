@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -30,7 +30,7 @@ fun SettingSwitchGroup(
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(0xFFFFFF).copy(alpha = 0.75f))
+            .background(Color(0xFFFFFFFF).copy(alpha = 0.75f))
     ) {
         settings.forEachIndexed { index, (title, checked, onCheckedChange) ->
             Row(
@@ -52,7 +52,7 @@ fun SettingSwitchGroup(
             }
 
             if (index < settings.lastIndex) {
-                Divider(color = colors.mediumGray.copy(alpha = 0.3f), thickness = 3.dp)
+                HorizontalDivider(color = colors.mediumGray.copy(alpha = 0.3f), thickness = 3.dp)
             }
         }
     }

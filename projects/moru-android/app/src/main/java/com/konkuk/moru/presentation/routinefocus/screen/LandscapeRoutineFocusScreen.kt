@@ -64,7 +64,6 @@ import com.konkuk.moru.presentation.home.RoutineStepData
 import com.konkuk.moru.presentation.home.component.RoutineResultRow
 import com.konkuk.moru.presentation.routinefocus.component.RoutineTimelineItem
 import com.konkuk.moru.presentation.routinefocus.component.ScreenBlockOverlay
-import com.konkuk.moru.presentation.routinefocus.component.AppIcon
 import com.konkuk.moru.presentation.routinefocus.component.SettingSwitchGroup
 import com.konkuk.moru.presentation.routinefocus.viewmodel.RoutineFocusViewModel
 import com.konkuk.moru.presentation.routinefocus.viewmodel.SharedRoutineViewModel
@@ -836,7 +835,7 @@ fun LandscapeRoutineFocusScreen(
                         .padding(top = 80.dp, end = 17.dp)
                         .width(149.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFFFFFF).copy(alpha = 0.75f))
+                        .background(Color(0xFFFFFFFF).copy(alpha = 0.75f))
                         .clickable(
                             onClick = { /* Do nothing */ }
                         )

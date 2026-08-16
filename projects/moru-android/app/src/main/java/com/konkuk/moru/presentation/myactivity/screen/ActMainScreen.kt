@@ -14,7 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -78,7 +78,7 @@ fun ActMainScreen(
             ActMyInfo(profileImage, routineCount, followerCount, followingCount, nickname ?: "알 수 없음", routineStatus, uiState.routineCompletionRate.toFloat(), navController = navController)
             Spacer(modifier = Modifier.height(24.dp))
 
-            var selectedTab by remember { mutableStateOf(0) }
+            var selectedTab by remember { mutableIntStateOf(0) }
             MyActivityTab(
                 insightData = uiState,
                 userName = nickname ?: "알 수 없음",

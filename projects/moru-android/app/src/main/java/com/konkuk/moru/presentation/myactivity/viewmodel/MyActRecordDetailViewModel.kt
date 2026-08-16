@@ -36,13 +36,10 @@ class MyActRecordDetailViewModel @Inject constructor(
                 .onSuccess { _detail.value = it; _error.value = null }
                 .onFailure { e ->
                     val msg = when (e) {
-                        is HttpException -> {
-                            val body = runCatching { e.response()?.errorBody()?.string() }.getOrNull()
-                            "HTTP ${e.code()} ${e.message()} ${body ?: ""}".trim()
-                        }
-                        is IOException -> "네트워크 오류: ${e.localizedMessage ?: e.javaClass.simpleName}"
-                        is SerializationException -> "파싱 오류: ${e.localizedMessage ?: e.javaClass.simpleName}"
-                        else -> e.localizedMessage ?: e.javaClass.simpleName
+                        is HttpException -> "요청에 실패했습니다. (HTTP ${e.code()})"
+                        is IOException -> "네트워크 연결을 확인해 주세요."
+                        is SerializationException -> "서버 응답을 처리하지 못했습니다."
+                        else -> "활동 기록을 불러오지 못했습니다."
                     }
                     _error.value = msg
                     Log.e("MyActRecordDetail", "load failed: exception=${e.javaClass.simpleName}")

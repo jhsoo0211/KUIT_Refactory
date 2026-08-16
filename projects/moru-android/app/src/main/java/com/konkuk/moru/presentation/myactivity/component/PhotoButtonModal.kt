@@ -2,7 +2,6 @@ package com.konkuk.moru.presentation.myactivity.component
 
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,27 +43,9 @@ fun PhotoButtonModal(
 ) {
     val context = LocalContext.current
 
-    // 런처 정의
-    val galleryPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { /* no-op */ }
-
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { /* no-op */ }
-
-    fun requestGalleryPermission() {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            android.Manifest.permission.READ_MEDIA_IMAGES
-        else
-            android.Manifest.permission.READ_EXTERNAL_STORAGE
-
-        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
-            galleryLauncher.launch("image/*")
-        } else {
-            galleryPermissionLauncher.launch(permission)
-        }
-    }
 
     fun requestCameraPermission() {
         val permission = android.Manifest.permission.CAMERA
@@ -112,7 +93,7 @@ fun PhotoButtonModal(
                         .height(55.dp)
                         .clickable {
                             showImagePickerSheet.value = false
-                            requestGalleryPermission()
+                            galleryLauncher.launch("image/*")
                         }
                 ) {
                     Text("앨범에서 선택", style = typography.desc_M_16, color = colors.black)

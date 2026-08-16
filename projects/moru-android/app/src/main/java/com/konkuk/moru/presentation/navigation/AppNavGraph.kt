@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,8 +72,8 @@ fun AppNavGraph(
     val context = LocalContext.current
     val sharedPreferences = remember { context.getSharedPreferences("prefs", Context.MODE_PRIVATE) }
 
-    val fabOffsetY = remember { mutableStateOf(0f) }
-    val todayTabOffsetY = remember { mutableStateOf(0f) }
+    val fabOffsetY = remember { mutableFloatStateOf(0f) }
+    val todayTabOffsetY = remember { mutableFloatStateOf(0f) }
     val bottomIconCenters = remember { mutableStateListOf<Offset>() }
 
     // 홈 온보딩 상태 관리

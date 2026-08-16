@@ -18,6 +18,7 @@ import com.konkuk.moru.presentation.routinefeed.data.AppDto
 import com.konkuk.moru.presentation.routinefeed.data.RoutineStepDto
 import com.konkuk.moru.presentation.routinefeed.data.SimilarRoutineItemDto
 import java.time.Duration
+import java.util.Locale
 
 // RoutineDetailResponse -> Routine (앱 공용 모델)
 private fun firstNonBlank(vararg s: String?): String? =
@@ -146,6 +147,6 @@ private fun parseIsoDurationToClock(iso: String?): String {
         val totalSec = d.seconds
         val minutes = totalSec / 60
         val seconds = totalSec % 60
-        String.format("%02d:%02d", minutes, seconds)
+        String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
     }.getOrElse { "00:00" }
 }

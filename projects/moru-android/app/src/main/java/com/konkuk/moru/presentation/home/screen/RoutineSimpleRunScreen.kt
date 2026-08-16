@@ -29,19 +29,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import com.google.gson.Gson
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.core.content.edit
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.konkuk.moru.R
@@ -83,50 +82,54 @@ fun RoutineSimpleRunScreen(
     // Context와 SharedPreferences 가져오기
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("routine_intro_prefs", android.content.Context.MODE_PRIVATE)
-    val gson = Gson()
-    
-    // 선택 여부 상태 관리 (기본값으로 초기화)
-    var selectedStates by remember { 
-        mutableStateOf(steps.map { false }.toMutableStateList())
+    val selectionStorageKey = remember(routineId) {
+        RoutineStepSelectionReducer.storageKey(routineId.toString())
     }
-    
-    // 화면 진입 시 저장된 선택 상태 복원
-    LaunchedEffect(Unit) {
-        
-        // 저장된 선택 상태가 있으면 복원
-        val savedSelectedStatesJson = sharedPreferences.getString("saved_selected_states_$routineTitle", null)
-        if (savedSelectedStatesJson != null) {
-            try {
-                
-                // JSON 문자열을 직접 파싱하여 Boolean 리스트로 변환
-                val savedStates = mutableListOf<Boolean>()
-                val jsonArray = savedSelectedStatesJson.trim('[', ']').split(',')
-                
-                jsonArray.forEach { item ->
-                    val trimmed = item.trim()
-                    if (trimmed == "true") {
-                        savedStates.add(true)
-                    } else if (trimmed == "false") {
-                        savedStates.add(false)
-                    }
-                }
-                
-                
-                if (savedStates.size == steps.size) {
-                    selectedStates = savedStates.toMutableStateList()
-                } else {
-                    selectedStates = steps.map { false }.toMutableStateList()
-                }
-            } catch (_: Exception) {
-                selectedStates = steps.map { false }.toMutableStateList()
-            }
+    val legacySelectionStorageKey = remember(routineTitle) {
+        RoutineStepSelectionReducer.legacyStorageKey(routineTitle)
+    }
+
+    var selectedStates by remember(routineId) { mutableStateOf(emptyList<Boolean>()) }
+
+    // The Flow may emit an empty list before its data arrives; render against an aligned
+    // immutable snapshot so the current step index is always safe in that transition.
+    val currentSelectedStates = RoutineStepSelectionReducer.reconcile(
+        stepCount = steps.size,
+        selection = selectedStates
+    )
+
+    LaunchedEffect(selectionStorageKey, legacySelectionStorageKey, steps.size) {
+        if (steps.isEmpty()) {
+            selectedStates = emptyList()
+            return@LaunchedEffect
+        }
+
+        val currentSelection = sharedPreferences.getString(selectionStorageKey, null)
+        val legacySelection = if (currentSelection == null) {
+            sharedPreferences.getString(legacySelectionStorageKey, null)
         } else {
-            selectedStates = steps.map { false }.toMutableStateList()
+            null
+        }
+        val savedSelection = currentSelection ?: legacySelection
+        selectedStates = RoutineStepSelectionReducer.restore(
+            stepCount = steps.size,
+            serializedSelection = savedSelection
+        )
+
+        // Move a valid legacy location to the ID-based key without keeping a title collision.
+        if (legacySelection != null) {
+            sharedPreferences.edit {
+                putString(
+                    selectionStorageKey,
+                    RoutineStepSelectionReducer.serialize(selectedStates)
+                )
+                remove(legacySelectionStorageKey)
+            }
         }
     }
 
     // Finish 버튼의 상태 저장
-    val isAnySelected = selectedStates.any { it }
+    val isAnySelected = currentSelectedStates.any { it }
 
     // 팝업 표시 여부
     var showFinishPopup by remember { mutableStateOf(false) }
@@ -206,18 +209,23 @@ fun RoutineSimpleRunScreen(
                 itemsIndexed(steps) { index, step ->
                     RoutineSelectItem(
                         text = step.name,
-                        isSelected = selectedStates[index],
+                        isSelected = currentSelectedStates[index],
                         onClick = {
-                            val newSelectedStates = selectedStates.toMutableStateList().apply {
-                                this[index] = !this[index]
-                            }
+                            val newSelectedStates = RoutineStepSelectionReducer.toggle(
+                                selection = currentSelectedStates,
+                                index = index
+                            )
                             selectedStates = newSelectedStates
                             
                             
                             // 선택 상태 변경 시 저장
                             try {
-                                val selectedStatesJson = gson.toJson(selectedStates.toList())
-                                sharedPreferences.edit().putString("saved_selected_states_$routineTitle", selectedStatesJson).apply()
+                                val selectedStatesJson =
+                                    RoutineStepSelectionReducer.serialize(newSelectedStates)
+                                sharedPreferences.edit {
+                                    putString(selectionStorageKey, selectedStatesJson)
+                                    remove(legacySelectionStorageKey)
+                                }
                             } catch (_: Exception) {
                             }
                         },
@@ -409,7 +417,7 @@ fun RoutineSimpleRunScreen(
                             RoutineResultRow(
                                 R.drawable.step_icon,
                                 "스텝",
-                                "${selectedStates.count { it }}/${steps.size}"
+                                "${currentSelectedStates.count { it }}/${steps.size}"
                             )
                             Spacer(modifier = Modifier.height(16.06.dp))
                             RoutineResultRow(R.drawable.clock_icon, "시간", finalElapsedTime)
@@ -437,10 +445,11 @@ fun RoutineSimpleRunScreen(
                                 
                                 // 루틴 완료 시 저장된 상태들 모두 초기화 (처음 상태로 복원)
                                 try {
-                                    val editor = sharedPreferences.edit()
-                                    editor.remove("saved_selected_states_$routineTitle") // 선택 상태 초기화
-                                    editor.remove("has_seen_intro_$routineTitle") // intro 다시 보도록 초기화
-                                    editor.apply()
+                                    sharedPreferences.edit {
+                                        remove(selectionStorageKey)
+                                        remove(legacySelectionStorageKey)
+                                        remove("has_seen_intro_$routineTitle") // intro 다시 보도록 초기화
+                                    }
                                 } catch (_: Exception) {
                                 }
                                 

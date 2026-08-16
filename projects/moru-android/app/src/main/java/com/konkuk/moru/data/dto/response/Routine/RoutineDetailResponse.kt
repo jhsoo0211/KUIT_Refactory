@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package com.konkuk.moru.data.dto.response.Routine
 
 import com.google.gson.annotations.SerializedName

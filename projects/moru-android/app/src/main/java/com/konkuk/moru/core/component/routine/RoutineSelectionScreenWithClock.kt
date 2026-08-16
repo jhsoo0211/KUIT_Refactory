@@ -1,8 +1,5 @@
 package com.konkuk.moru.core.component.routine
 
-// ... 다른 import 구문들은 그대로 ...
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -130,7 +127,6 @@ private fun RoutineListItemWithClockPreview1() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, name = "시간 설정")
 @Composable
 private fun RoutineListItemWithClockTimeSetPreview() {

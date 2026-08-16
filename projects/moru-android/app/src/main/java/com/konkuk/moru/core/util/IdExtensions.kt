@@ -1,6 +1,11 @@
 package com.konkuk.moru.core.util
 
-/** 서버의 String ID(UUID/숫자)를 안정적인 Int 키로 변환 (항상 동일 문자열 → 동일 Int) */
+/**
+ * Converts legacy numeric or textual server IDs to the stable key required by older Int APIs.
+ *
+ * This is a compatibility key, not a globally unique identifier. Callers must retain the
+ * original String ID for navigation and network requests.
+ */
 fun String.toStableIntId(): Int {
     this.toLongOrNull()?.let {
         val mod = (it % Int.MAX_VALUE).toInt()

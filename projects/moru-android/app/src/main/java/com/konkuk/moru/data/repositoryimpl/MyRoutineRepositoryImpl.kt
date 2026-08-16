@@ -19,7 +19,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Response
+import java.io.IOException
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
@@ -161,22 +161,21 @@ class MyRoutineRepositoryImpl @Inject constructor(
     }
 
 
-    private fun Response<Unit>.isOkOr404() = isSuccessful || code() == 404
-
-
-    // 404는 “이미 삭제됨”으로 간주하여 성공 처리
+    /**
+     * Deletes only the routine itself.
+     *
+     * A failed routine DELETE must not trigger schedule cleanup: an authorization or validation
+     * failure does not prove that deleting related data is safe. HTTP 404 is idempotent success
+     * because the routine is already absent.
+     */
     override suspend fun deleteRoutineSafe(routineId: String): Boolean {
-        val first = service.deleteRoutine(routineId)
-        if (first.isSuccessful || first.code() == 404) return true
-
-        // 연관 스케줄 정리 시도
-        service.deleteAllSchedules(routineId) // 2xx/404 모두 무시 가능
-
-        val second = service.deleteRoutine(routineId)
-        if (second.isSuccessful || second.code() == 404) return true
-
-        // 최종 실패: false 반환(절대 throw 해서 앱 죽이지 않기)
-        return false
+        return try {
+            val response = service.deleteRoutine(routineId)
+            response.isSuccessful || response.code() == 404
+        } catch (_: IOException) {
+            // Offline and transport failures are recoverable UI failures, not deletion success.
+            false
+        }
     }
 
     override suspend fun createSchedule(
@@ -195,17 +194,12 @@ class MyRoutineRepositoryImpl @Inject constructor(
         )
         val res = service.createSchedule(routineId, body)
         if (!res.isSuccessful) {
-            val err = try {
-                res.errorBody()?.string()
-            } catch (_: Exception) {
-                null
-            }
-            throw IllegalStateException("createSchedule failed: ${res.code()} $err")
+            throw IllegalStateException("createSchedule failed: HTTP ${res.code()}")
         }
         // (선택) 서버가 리스트를 돌려주면 비었을 때 실패 취급해도 됨
         val created = res.body().orEmpty()
         if (created.isEmpty()) {
-            throw IllegalStateException("createSchedule returned empty list (days=${body.daysToCreate})")
+            throw IllegalStateException("createSchedule returned an empty result")
         }
         return true
     }
@@ -229,23 +223,6 @@ class MyRoutineRepositoryImpl @Inject constructor(
             )
         }
     }
-
-    /*override suspend fun getSchedules(routineId: String): List<MyRoutineSchedule> {
-
-
-        return service.getSchedules(routineId).map { dto ->
-            MyRoutineSchedule(
-                id = dto.id,
-                dayOfWeek = dto.dayOfWeek,
-                time = dto.time,
-                alarmEnabled = dto.alarmEnabled,
-                repeatType = dto.repeatType,
-                daysToCreate = dto.daysToCreate
-            )
-
-        }
-
-    }*/
 
     override suspend fun deleteAllSchedules(routineId: String) {
         val r = service.deleteAllSchedules(routineId)
@@ -271,42 +248,13 @@ class MyRoutineRepositoryImpl @Inject constructor(
             alarmEnabled = alarm
         )
 
-        val res = service.patchSchedule(routineId, schId, req)
-        if (res.isSuccessful) {
-            val body = res.body() ?: emptyList()
-            return body.map { dto ->
-                MyRoutineSchedule(
-                    id = dto.id,
-                    dayOfWeek = dto.dayOfWeek,
-                    time = dto.time,
-                    alarmEnabled = dto.alarmEnabled,
-                    repeatType = dto.repeatType,
-                    daysToCreate = dto.daysToCreate
-                )
-            }
+        val response = service.patchSchedule(routineId, schId, req)
+        if (!response.isSuccessful) {
+            // Do not read or expose an error body: it can contain server diagnostics or credentials.
+            throw IllegalStateException("updateSchedule failed: HTTP ${response.code()}")
         }
 
-        // 🔁 서버가 또 500을 내면 “전체 치우고 다시 만들기”로 폴백
-        service.deleteAllSchedules(routineId)
-        val created = service.createSchedule(
-            routineId,
-            ScheduleUpsertRequest(
-                repeatType = "CUSTOM",
-                daysToCreate = days.map { it.toMyApiString() },
-                time = time,
-                alarmEnabled = alarm
-            )
-        )
-        if (!created.isSuccessful) {
-            val err = try {
-                created.errorBody()?.string()
-            } catch (_: Exception) {
-                null
-            }
-            throw IllegalStateException("fallback createSchedule failed: ${created.code()} $err")
-        }
-        // 생성 직후 서버 상태 다시 가져와 리턴
-        return service.getSchedules(routineId).map { dto ->
+        return response.body().orEmpty().map { dto ->
             MyRoutineSchedule(
                 id = dto.id,
                 dayOfWeek = dto.dayOfWeek,
