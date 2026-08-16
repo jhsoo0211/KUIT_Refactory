@@ -1,0 +1,4 @@
+# Android Studio writes sdk.dir to the untracked local.properties file.
+# The API URL can also be supplied with -PMORU_BASE_URL or MORU_BASE_URL.
+# sdk.dir=/absolute/path/to/Android/Sdk
+base.url=https://api.example.com/

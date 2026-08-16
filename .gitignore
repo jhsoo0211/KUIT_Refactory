@@ -1,0 +1,21 @@
+# Android / Gradle build output across the preserved standalone projects
+**/.gradle/
+**/.kotlin/
+**/build/
+**/out/
+**/captures/
+
+# Local IDE and SDK configuration
+**/.idea/
+**/*.iml
+**/local.properties
+
+# Credentials and signing material
+**/google-services.json
+**/*.jks
+**/*.keystore
+
+# Generated application artifacts
+**/*.apk
+**/*.aab
+**/app/release/
